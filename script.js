@@ -7,11 +7,15 @@ function Gameboard () {
         board[i] = [];
     }
 
-    for(let i = 0; i < 3; i++) {
-        for(let k = 0; k < 3; k++) {
-            board[i][k] = "";
+
+    const setBoard = () => {
+        for(let i = 0; i < 3; i++) {
+            for(let k = 0; k < 3; k++) {
+                board[i][k] = "";
+            }
         }
     }
+    setBoard();
 
     const getBoard = () => board;
 
@@ -21,13 +25,16 @@ function Gameboard () {
         }
     }
 
+
+    
+
     const printBoard = () => {
         for(let i = 0; i < 3; i++) {
             console.log(board[i]);
         }
     }
 
-    return {getBoard, placeToken, printBoard};
+    return {getBoard, placeToken, printBoard, setBoard};
 }
 
 
@@ -70,6 +77,15 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
     const getGameState = () => {
         return gameState;
     }
+
+    const resetGameState = () => {
+        board.setBoard();
+        activePlayer = players[0];
+        gameState.isGameOver = false;
+        gameState.isDraw = false;
+        gameState.winner = "";
+    }
+
 
     const printNewRound = () => {
         board.printBoard();
@@ -174,7 +190,7 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
         }
     }
 
-    return {playRound, getActivePlayer, getBoard: board.getBoard, getGameState};
+    return {playRound, getActivePlayer, getBoard: board.getBoard, getGameState, resetGameState};
 }
 
 
@@ -183,6 +199,7 @@ function ScreenController() {
     const game = GameController();
     const playerTurnDiv = document.querySelector('.turn');
     const boardDiv = document.querySelector('.board');
+    const playAgainBtn = document.querySelector('.play_again_btn');
 
 
     const updateScreen = () => {
@@ -222,10 +239,15 @@ function ScreenController() {
     boardDiv.addEventListener('click', (event) => {
         const selectedRow = event.target.dataset.row;
         const selectedColumn = event.target.dataset.column;
-
         game.playRound(selectedRow, selectedColumn);
         updateScreen();
     })
+
+
+    playAgainBtn.addEventListener('click', (event) => {
+        game.resetGameState();
+        updateScreen();
+    });
 
     updateScreen();
 }
