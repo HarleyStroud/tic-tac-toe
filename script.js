@@ -15,22 +15,10 @@ function Gameboard () {
 
     const getBoard = () => board;
 
-    const placeToken = (position, player) => {
-
-        let positionNumber = 0;
-        for(let i = 0; i < 3; i++) {
-
-            for(let k = 0; k < 3; k++) {
-                if(positionNumber === position) {
-                    if(board[i][k] === "") {
-                        board[i][k] = player;
-                    }   
-                }
-
-                positionNumber++;
-            }
+    const placeToken = (rowPosition, columnPosition, player) => {
+        if(board[rowPosition][columnPosition] === "") {
+            board[rowPosition][columnPosition] = player;
         }
-
     }
 
     const printBoard = () => {
@@ -46,6 +34,7 @@ function Gameboard () {
 
 function GameController(playerOneName = "Player One", playerTwoName = "Player Two") {
     const board = Gameboard();
+    const gameState = {isGameOver: false, isDraw: false, winner: ""};
 
     // Array of player objects.
     const players = [
@@ -78,6 +67,10 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
     }
 
 
+    const getGameState = () => {
+        return gameState;
+    }
+
     const printNewRound = () => {
         board.printBoard();
         console.log(`${getActivePlayer().name}'s turn.`);
@@ -87,9 +80,13 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
     printNewRound();
 
 
-    const playRound = (position) => {
-        board.placeToken(position, activePlayer.token);
+    const playRound = (rowPosition, columnPosition) => {
+        if(gameState.isGameOver) {
+            return;
+        }
 
+        board.placeToken(rowPosition, columnPosition, activePlayer.token);
+        let playerHasWon = false;
         // First check 3 in a row
         /*
             [xxx]
@@ -106,6 +103,7 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
             }
 
             if(tokenCountInRow === 3) {
+                playerHasWon = true;
                 console.log(`${activePlayer.name} Wins!`);
             }
         }
@@ -132,6 +130,7 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
             }
             
             if(tokenCountInColumn === 3) {
+                playerHasWon = true;
                 console.log(`${activePlayer.name} Wins!`);
             }
         }
@@ -154,33 +153,84 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
             if(board.getBoard()[0][0] == activePlayer.token) {
                 if(board.getBoard()[2][2] == activePlayer.token) {
                     console.log(`${activePlayer.name} Wins!`);
+                    playerHasWon = true;
                 }
             }
             else if(board.getBoard()[0][2] == activePlayer.token) {
                 if(board.getBoard()[2][0] == activePlayer.token) {
                     console.log(`${activePlayer.name} Wins!`);
+                    playerHasWon = true;
                 }
             }
         }
-        
 
-        switchPlayerTurn();
-        printNewRound();
+        if(playerHasWon) {
+           gameState.isGameOver = true;
+           gameState.winner = activePlayer.name; 
+        }
+        else {
+            switchPlayerTurn();
+            printNewRound();
+        }
     }
 
-    return {playRound, getActivePlayer};
+    return {playRound, getActivePlayer, getBoard: board.getBoard, getGameState};
 }
+
 
 
 function ScreenController() {
     const game = GameController();
     const playerTurnDiv = document.querySelector('.turn');
+    const boardDiv = document.querySelector('.board');
+
+
+    const updateScreen = () => {
+        boardDiv.textContent = "";
+        const board = game.getBoard();
+        const gameState = game.getGameState();
+        const activePlayer = game.getActivePlayer();
+        
+        if(gameState.isGameOver) {
+            if(gameState.isDraw) {
+                playerTurnDiv.textContent = "DRAW!";
+            }
+            else {
+                playerTurnDiv.textContent = `${gameState.winner} WINS!`;
+            }
+        }
+        else {
+            playerTurnDiv.textContent = `${activePlayer.name}'s turn`;
+        }
+        
+
+        board.forEach((row, rowIndex) => {
+            row.forEach((column, columnIndex) => {
+                const cellButton = document.createElement("button");
+                cellButton.classList.add("cell");
+
+                cellButton.dataset.row = rowIndex;
+                cellButton.dataset.column = columnIndex;
+
+                cellButton.textContent = board[rowIndex][columnIndex];
+                boardDiv.appendChild(cellButton);
+            })
+            
+        });
+    }
+
+    boardDiv.addEventListener('click', (event) => {
+        const selectedRow = event.target.dataset.row;
+        const selectedColumn = event.target.dataset.column;
+
+        game.playRound(selectedRow, selectedColumn);
+        updateScreen();
+    })
+
+    updateScreen();
 }
 
 
-const gameController = GameController();
-gameController.playRound(0);
-gameController.playRound(2);
-gameController.playRound(3);
-gameController.playRound(8);
-gameController.playRound(6);
+
+
+ScreenController();
