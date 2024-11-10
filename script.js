@@ -41,7 +41,7 @@ function Gameboard () {
 
 function GameController(playerOneName = "Player One", playerTwoName = "Player Two") {
     const board = Gameboard();
-    const gameState = {isGameOver: false, isDraw: false, winner: ""};
+    const gameState = {turnsTaken: 0, isGameOver: false, isDraw: false, winner: ""};
 
     // Array of player objects.
     const players = [
@@ -81,6 +81,7 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
     const resetGameState = () => {
         board.setBoard();
         activePlayer = players[0];
+        gameState.turnsTaken = 0;
         gameState.isGameOver = false;
         gameState.isDraw = false;
         gameState.winner = "";
@@ -101,7 +102,12 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
             return;
         }
 
+        if(board.getBoard()[rowPosition][columnPosition] !== "") {
+            return
+        }
+
         board.placeToken(rowPosition, columnPosition, activePlayer.token);
+        gameState.turnsTaken++;
         let playerHasWon = false;
         // First check 3 in a row
         /*
@@ -184,6 +190,10 @@ function GameController(playerOneName = "Player One", playerTwoName = "Player Tw
            gameState.isGameOver = true;
            gameState.winner = activePlayer.name; 
         }
+        else if(gameState.turnsTaken === 9) {
+            gameState.isGameOver = true;
+            gameState.isDraw = true;
+        }
         else {
             switchPlayerTurn();
             printNewRound();
@@ -239,6 +249,11 @@ function ScreenController() {
     boardDiv.addEventListener('click', (event) => {
         const selectedRow = event.target.dataset.row;
         const selectedColumn = event.target.dataset.column;
+
+        if(!selectedRow) {
+            return;
+        }
+
         game.playRound(selectedRow, selectedColumn);
         updateScreen();
     })
